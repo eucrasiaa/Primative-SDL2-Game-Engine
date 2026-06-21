@@ -3,14 +3,15 @@
 #include <iostream>
 #include <string_view>
 #include <span>
-#include <concepts>
+
 
 // Terminal Control Sequences
-#define TERM_CLEAR_ALL      "\033[2J"
-#define TERM_CLEAR_LINE     "\033[2K"
-#define TERM_CURSOR_HOME    "\033[H"
-#define TERM_CURSOR_HIDE    "\033[?25l"
-#define TERM_CURSOR_SHOW    "\033[?25h"
+#define TERM_CLEAR_ALL       "\033[2J"
+#define TERM_CLEAR_LINE      "\033[2K"
+#define TERM_CURSOR_HOME     "\033[H"
+#define TERM_CURSOR_HIDE     "\033[?25l"
+#define TERM_CURSOR_SHOW     "\033[?25h"
+#define TERM_CURSOR_LINEHOME "\033[1G" 
 
 // Text Attributes
 #define TERM_RESET          "\033[0m"
@@ -77,6 +78,9 @@ namespace term {
 
   inline void clear_all(){
     fputs(TERM_CLEAR_ALL,stdout);
+  }
+  inline void curser_home(){
+    fputs(TERM_CURSOR_LINEHOME, stdout);
   }
 
   // Moves the cursor down N rows
