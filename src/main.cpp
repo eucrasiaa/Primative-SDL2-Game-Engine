@@ -2,6 +2,7 @@
 #include <SDL_events.h>
 #include <SDL_keycode.h>
 #include <SDL_render.h>
+#include <SDL_timer.h>
 #include <cctype>
 #include <cstdint>
 #include <format>
@@ -23,21 +24,22 @@ const int WINR_HEIGHT_MIN = 480;
 
 typedef struct DebugStates{
   struct MouseStateType {
-    int_fast32_t x = 0;
-    int_fast32_t y = 0;
-    int_fast32_t x_rel = 0;
-    int_fast32_t y_rel = 0;
+    int x = 0;
+    int y = 0;
+    int x_rel = 0;
+    int y_rel = 0;
   };
 
   struct KeyboardStateType {
-    uint_fast32_t scancode = 0;
-    uint_fast32_t mod = 0;
-    uint_fast32_t sym = 0;
+    unsigned int scancode = 0;
+    unsigned int mod = 0;
+    unsigned int sym = 0;
   };
   MouseStateType mouse;
   KeyboardStateType keyboard;
 }DebugStates;
 
+const Uint32 FIXED_TIME_STEP = 1000/60; // 60hz, or 0.01666 seconds
 
 typedef enum DebugPrintStates{
   None = 0x0,
@@ -50,6 +52,9 @@ class SystemStruct{
   private:
   public:
     DebugStates debugStates;
+
+
+    Uint32 frameStart; 
     InputManager input;
     std::vector<char> keyBuff;
     SystemStruct(){
@@ -83,7 +88,7 @@ class SystemStruct{
       }
       if (flags & DebugPrintStates::Keyboard) {
         term::move_up(DebugPrintStates::Keyboard, true);
-                term::curser_home();
+        term::curser_home();
         term::print_labeled_array("Keydown", 
             {(int32_t)debugStates.keyboard.scancode, 
             (int32_t)debugStates.keyboard.mod,
@@ -93,7 +98,7 @@ class SystemStruct{
       }
       if (flags & DebugPrintStates::TextBuff) {
         term::move_up(DebugPrintStates::TextBuff, true);
-                term::curser_home();
+        term::curser_home();
 
         std::cout << std::string_view(keyBuff.data(), keyBuff.size()) << std::flush;
         term::move_down(DebugPrintStates::TextBuff);
@@ -110,8 +115,70 @@ class SystemStruct{
     }
 };
 
+typedef struct InitWinRenConfig {
+  int x = SDL_WINDOWPOS_CENTERED;
+  int y = SDL_WINDOWPOS_CENTERED;
+  int w = WINR_WIDTH;
+  int h = WINR_HEIGHT;
+  int w_min = WINR_WIDTH_MIN;
+  int h_min = WINR_HEIGHT_MIN;
+  const char* title = "wintitle";
+  Uint32 wflags = SDL_WINDOW_SHOWN;
+  int index = -1;
+  Uint32 rflags = SDL_RENDERER_ACCELERATED;
+  bool default_conf = true;
+} InitWinRenConfig;
+
+int InitiateWindow(SDL_Window *&window, SDL_Renderer *&renderer, const InitWinRenConfig conf){
+
+  // backup?
+  if (renderer != nullptr){
+    std::cerr<<"Initiate passed active renderer, safely killing";
+    SDL_DestroyRenderer(renderer);
+    renderer = nullptr;
+    SDL_DestroyWindow(window);
+    window = nullptr;  
+  }
+  if (window != nullptr){
+    std::cerr<<"Initiate passed active window, safely killing";
+    SDL_DestroyWindow(window);
+    window = nullptr;
+  }
+  // run
+  window = SDL_CreateWindow(conf.title, 
+      conf.x, conf.y,
+      conf.w, conf.h, conf.wflags);
+  if(window == nullptr){
+    std::cerr << std::format("window creation failure, see {}\n", SDL_GetError());
+    SDL_Quit();
+    return 1;
+  } 
+  renderer = SDL_CreateRenderer(window, conf.index, conf.rflags);
+  if(renderer == nullptr){
+    std::cerr << std::format("renderer creation failure, see {}\n", SDL_GetError());
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return 1;
+  } 
+  if (conf.default_conf){
+    SDL_RenderSetLogicalSize(renderer, conf.w, conf.h);
+    SDL_SetWindowMinimumSize(window, conf.w_min, conf.h_min);
+  } 
+
+  return 0;
+}
+
+
+class DebugWindowManager{
+  public:
+    SDL_Window* win_debug = nullptr;
+    SDL_Renderer* ren_debug = nullptr;
+
+};
+
 int main(){
   SystemStruct *CoreSysStruct = new SystemStruct();
+    
   // 2 structs: sdlwindow and sdl renderer, then initialize it!
   SDL_Window* window = nullptr;
   SDL_Renderer* renderer = nullptr;
@@ -122,24 +189,12 @@ int main(){
 
   // initialize win + render
   //SDL_CreateWindowAndRenderer(640, 640, 0, &window, &renderer);
-  window = SDL_CreateWindow("Will\'s first window", 
-      SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-      WINR_WIDTH, WINR_HEIGHT, SDL_WINDOW_SHOWN);
-  if(window == nullptr){
-    std::cerr << std::format("window creation failure, see {}\n", SDL_GetError());
-    SDL_Quit();
-    return 1;
-  } 
-  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-  if(renderer == nullptr){
-    std::cerr << std::format("renderer creation failure, see {}\n", SDL_GetError());
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return 1;
-  } 
+  InitiateWindow(window, renderer, InitWinRenConfig{});
+  
+  // InitiateWindow(win_debug, ren_debug, InitWinRenConfig{});
+
+
   // SDL_RenderSetScale(renderer, 4,4);
-  SDL_RenderSetLogicalSize(renderer, WINR_WIDTH, WINR_HEIGHT);
-  SDL_SetWindowMinimumSize(window, WINR_WIDTH_MIN, WINR_HEIGHT_MIN);
 
   SDL_SetRenderDrawColor(renderer, 33, 150, 243, 255);
   SDL_RenderClear(renderer);
@@ -148,10 +203,10 @@ int main(){
   bool gameIsRunning = true;
   CoreSysStruct->initPrint();
   while(gameIsRunning){
+    CoreSysStruct->frameStart = SDL_GetTicks();
     SDL_Event event;
     // start loop:
-    // while(SDL_PollEvent(&event)){
-    if (SDL_WaitEvent(&event)){
+    while(SDL_PollEvent(&event)){ //if (SDL_WaitEvent(&event))
       CoreSysStruct->printDebug(DebugPrintStates::All);
       switch (event.type){
         using enum SDL_EventType;
@@ -162,16 +217,15 @@ int main(){
             .x_rel = event.motion.xrel, 
             .y_rel = event.motion.yrel
           };
-          break;
+        break;
         case SDL_KEYDOWN:
-          CoreSysStruct->debugStates.keyboard = {
-            .scancode = event.key.keysym.scancode,
-            .mod = event.key.keysym.mod,
-            .sym = static_cast<uint_fast32_t>(event.key.keysym.sym)
-          };
-
-          if (event.key.keysym.scancode >= SDL_SCANCODE_A && event.key.keysym.scancode <= SDL_SCANCODE_Z) {
-            CoreSysStruct->pushKeystroke(CoreSysStruct->ProcessLetter(event.key));
+        CoreSysStruct->debugStates.keyboard = {
+          .scancode = event.key.keysym.scancode,
+          .mod = event.key.keysym.mod,
+          .sym = static_cast<unsigned int>(event.key.keysym.sym)
+        };
+        if (event.key.keysym.scancode >= SDL_SCANCODE_A && event.key.keysym.scancode <= SDL_SCANCODE_Z) {
+          CoreSysStruct->pushKeystroke(CoreSysStruct->ProcessLetter(event.key));
           // char res = '_';
           // if(event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT)){
           //   res = std::toupper('a'+event.key.keysym.scancode-4);
@@ -183,16 +237,22 @@ int main(){
           // term::move_up(3,true);
           // std::cout<< std::string_view(CoreSysStruct->keyBuff)<<std::flush;
           // term::move_down(3);
-          }
-          break;
+        }
+        break;
         [[unlikely]] case SDL_QUIT:
           gameIsRunning = false;
         break;
-      }
-    }
+      } // switch
+    } // event poll loop
 
-  }
-  // SDL_Delay(3000);
+    //Game Logic here()
+    //Render Frame here()
+    Uint32 frameTime = SDL_GetTicks() - CoreSysStruct->frameStart;
+    if (FIXED_TIME_STEP > frameTime) {
+        SDL_Delay(FIXED_TIME_STEP - frameTime);
+    }
+  } //while true loop
+    // SDL_Delay(3000);
 
 
 
@@ -202,4 +262,5 @@ int main(){
 
 
   return 0;
-  }
+}
+

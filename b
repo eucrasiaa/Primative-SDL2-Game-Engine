@@ -45,6 +45,9 @@ case "$1" in
         echo "Cleaning build directory..."
         find . -mindepth 1 -delete
         ;;
+    k)
+      pkill render_trials
+      ;;
     *)
       echo "Usage: ./b.sh [(d)ebug| (f)inalrelease|(a)san|(r)un|(val)grind|clean] [ -> sdl2 <- |raylib]"
         echo "  d, debug     - Debug build (symbols active, ASan off)"
@@ -53,5 +56,6 @@ case "$1" in
         echo "  run          - Run the program"
         echo "  val, valgrind - Run with valgrind memory analysis"
         echo "  clean        - Safely wipe build directory"
+        echo "  k            - kill program (attempted by name)"
         ;;
 esac

@@ -1,7 +1,6 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include <SDL_scancode.h>
-#include <any>
 #include <iostream>
 #include <unordered_map>
 #include <functional>
@@ -16,16 +15,23 @@ class InputManager {
     // basic state for polling query
 
     using InputKeyCallback = std::move_only_function<void(bool isPressed, SDL_Keymod mod)>;
-    std::unordered_map<SDL_Scancode, std::string> scancodeToActionLabel;
-    std::unordered_map<std::string, std::vector<InputKeyCallback>> actionCallbacks;
 
+    // scancode to the abstract label name
+    std::unordered_map<SDL_Scancode, std::string> scancodeToAction;
+    
+    //state tracking?
+    std::unordered_map<std::string, bool> currentFrameState;
+    std::unordered_map<std::string, bool> previousFrameState;
+
+    //
+    std::unordered_map<std::string, std::vector<InputKeyCallback>> actionCallbacks;
     std::unordered_map<std::string, bool> actionStates;
     //std::unordered_map<SDL_Keycode, std::vector<std::move_only_function<void(void*, SDL_Keymod)>>> keyBindings;
 
   public:
     // void bindKey(SDL_Scancode, std::move_only_function<> ) 
     void addKeyMapping(const std::string& action, SDL_Scancode scancode) {
-      scancodeToActionLabel[scancode] = action;
+      scancodeToAction[scancode] = action;
     }
 
     // signal connection
@@ -34,8 +40,8 @@ class InputManager {
     }
     void parseKeyInput(const SDL_Event& event){
       SDL_Scancode code = event.key.keysym.scancode;
-      auto acIter = scancodeToActionLabel.find(code);
-      if (acIter != scancodeToActionLabel.end()) {
+      auto acIter = scancodeToAction.find(code);
+      if (acIter != scancodeToAction.end()) {
         const std::string& action = acIter->second;
         bool isPressed = (event.type == SDL_KEYDOWN);
         SDL_Keymod mod = static_cast<SDL_Keymod>(event.key.keysym.mod);
