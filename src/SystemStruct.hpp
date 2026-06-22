@@ -47,6 +47,8 @@ class SystemStruct{
     void processBackspace();
 
     void init();
+    // TODO: fix letter handling ? it only does alpha. or natively tie all basic letters to
+    //  a bound funct. idk
     char ProcessLetter(SDL_KeyboardEvent kevent);
     void printDebug(uint32_t flags);
 };
