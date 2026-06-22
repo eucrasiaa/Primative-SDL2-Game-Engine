@@ -1,0 +1,53 @@
+#pragma once
+#include <SDL2/SDL.h>
+#include "InputManager.hpp"
+typedef struct DebugStates{
+  struct MouseStateType {
+    int x = 0;
+    int y = 0;
+    int x_rel = 0;
+    int y_rel = 0;
+  };
+
+  struct KeyboardStateType {
+    unsigned int scancode = 0;
+    unsigned int mod = 0;
+    unsigned int sym = 0;
+  };
+  MouseStateType mouse;
+  KeyboardStateType keyboard;
+}DebugStates;
+
+
+typedef enum DebugPrintStates{
+  None = 0x0,
+  Mouse = 0x1,
+  Keyboard = 0x2,
+  TextBuff = 0x4,
+  All = 0x1F,
+}DebugPrintStates;
+
+class SystemStruct{
+  private:
+  public:
+    DebugStates debugStates;
+
+
+    Uint32 frameStart; 
+    InputManager input;
+    std::vector<char> keyBuff;
+    SystemStruct(){
+      keyBuff.reserve(1000);
+    }
+    ~SystemStruct() = default;
+
+    void initPrint();
+    
+    void pushKeystroke(char c);
+    void processBackspace();
+
+    void init();
+    char ProcessLetter(SDL_KeyboardEvent kevent);
+    void printDebug(uint32_t flags);
+};
+

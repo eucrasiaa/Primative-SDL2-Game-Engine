@@ -118,11 +118,12 @@ add_custom_target(run
 
 
 
+# be willing to toggle supressions. it helps tho
 if(USE_VALGRIND)
     find_program(VALGRIND_PROGRAM valgrind)
     if(VALGRIND_PROGRAM)
         add_custom_target(valgrind
-            COMMAND ${VALGRIND_PROGRAM} --leak-check=full --track-origins=yes $<TARGET_FILE:${PROJECT_NAME}>
+            COMMAND ${VALGRIND_PROGRAM} --leak-check=full --track-origins=yes --suppressions=sdl2.supp $<TARGET_FILE:${PROJECT_NAME}>
             DEPENDS ${PROJECT_NAME}
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             COMMENT "Running Valgrind memory analysis"

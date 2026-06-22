@@ -1,0 +1,4 @@
+input_up:    W, UP
+input_down:  S, DOWN
+input_left:  A, LEFT
+input_right: D, RIGHT

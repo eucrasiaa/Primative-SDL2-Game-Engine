@@ -1,0 +1,293 @@
+#include <SDL2/SDL.h>
+#include <SDL_events.h>
+#include <SDL_keycode.h>
+#include <SDL_render.h>
+#include <SDL_timer.h>
+#include <cctype>
+#include <cstdint>
+#include <format>
+#include <iostream>
+#include <new>
+#include <stdint.h>
+
+
+#include <string_view>
+#include <sys/types.h>
+#include <vector>
+
+#include "ansi_control.hpp"
+#include "InputManager.hpp"
+const int WINR_WIDTH = 1024;
+const int WINR_HEIGHT = 768;
+const int WINR_WIDTH_MIN = 640;
+const int WINR_HEIGHT_MIN = 480;
+
+typedef struct DebugStates{
+  struct MouseStateType {
+    int x = 0;
+    int y = 0;
+    int x_rel = 0;
+    int y_rel = 0;
+  };
+
+  struct KeyboardStateType {
+    unsigned int scancode = 0;
+    unsigned int mod = 0;
+    unsigned int sym = 0;
+  };
+  MouseStateType mouse;
+  KeyboardStateType keyboard;
+}DebugStates;
+
+const Uint32 FIXED_TIME_STEP = 1000/60; // 60hz, or 0.01666 seconds
+
+typedef enum DebugPrintStates{
+  None = 0x0,
+  Mouse = 0x1,
+  Keyboard = 0x2,
+  TextBuff = 0x4,
+  All = 0x1F,
+}DebugPrintStates;
+class SystemStruct{
+  private:
+  public:
+    DebugStates debugStates;
+
+
+    Uint32 frameStart; 
+    InputManager input;
+    std::vector<char> keyBuff;
+    SystemStruct(){
+      keyBuff.reserve(1000);
+    }
+    ~SystemStruct() = default;
+
+    void initPrint(){
+      std::cout<<"\n\n\n\n\n\n\n\n\n\n\n\n" <<std::flush;
+    }
+    void pushKeystroke(char c){
+      keyBuff.push_back(c);
+    }
+    void processBackspace(){
+      keyBuff.pop_back();
+    }
+    char ProcessLetter(SDL_KeyboardEvent kevent){
+      char res = (kevent.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT)) 
+        ? std::toupper('a' + kevent.keysym.scancode - 4)
+        : ('a' + kevent.keysym.scancode - 4);
+      return res;
+    }
+    void printDebug(uint32_t flags){
+      if (flags & DebugPrintStates::Mouse) {
+        term::move_up(DebugPrintStates::Mouse, true);
+        term::curser_home();
+        term::print_labeled_array("Mouse", 
+            {debugStates.mouse.x, 
+            debugStates.mouse.y, 
+            debugStates.mouse.x_rel, 
+            debugStates.mouse.y_rel}, 
+            {"x", "y", "xrel", "yrel"});
+        term::move_down(DebugPrintStates::Mouse);
+      }
+      if (flags & DebugPrintStates::Keyboard) {
+        term::move_up(DebugPrintStates::Keyboard, true);
+        term::curser_home();
+        term::print_labeled_array("Keydown", 
+            {(int32_t)debugStates.keyboard.scancode, 
+            (int32_t)debugStates.keyboard.mod,
+            (int32_t)debugStates.keyboard.sym},
+            {"scancode", "mod", "sym"});
+        term::move_down(DebugPrintStates::Keyboard);
+      }
+      if (flags & DebugPrintStates::TextBuff) {
+        term::move_up(DebugPrintStates::TextBuff, true);
+        term::curser_home();
+
+        std::cout << std::string_view(keyBuff.data(), keyBuff.size()) << std::flush;
+        term::move_down(DebugPrintStates::TextBuff);
+      }
+
+      // term::move_up(5, true);
+      // term::print_labeled_array("Mouse", 
+      //     {event.motion.x, event.motion.y, 
+      //     event.motion.xrel, event.motion.yrel,
+      //     (Sint32)event.motion.windowID}, 
+      //     {"x","y","xrel","yrel", "window"});
+      // term::move_down(5);
+      //
+    }
+};
+
+typedef struct InitWinRenConfig {
+  int x = SDL_WINDOWPOS_CENTERED;
+  int y = SDL_WINDOWPOS_CENTERED;
+  int w = WINR_WIDTH;
+  int h = WINR_HEIGHT;
+  int w_min = WINR_WIDTH_MIN;
+  int h_min = WINR_HEIGHT_MIN;
+  const char* title = "wintitle";
+  Uint32 wflags = SDL_WINDOW_SHOWN;
+  int index = -1;
+  Uint32 rflags = SDL_RENDERER_ACCELERATED;
+  bool default_conf = true;
+} InitWinRenConfig;
+
+int InitiateWindow(SDL_Window *&window, SDL_Renderer *&renderer, const InitWinRenConfig conf){
+
+  // backup?
+  if (renderer != nullptr){
+    std::cerr<<"Initiate passed active renderer, safely killing";
+    SDL_DestroyRenderer(renderer);
+    renderer = nullptr;
+    SDL_DestroyWindow(window);
+    window = nullptr;  
+  }
+  if (window != nullptr){
+    std::cerr<<"Initiate passed active window, safely killing";
+    SDL_DestroyWindow(window);
+    window = nullptr;
+  }
+  // run
+  window = SDL_CreateWindow(conf.title, 
+      conf.x, conf.y,
+      conf.w, conf.h, conf.wflags);
+  if(window == nullptr){
+    std::cerr << std::format("window creation failure, see {}\n", SDL_GetError());
+    SDL_Quit();
+    return 1;
+  } 
+  renderer = SDL_CreateRenderer(window, conf.index, conf.rflags);
+  if(renderer == nullptr){
+    std::cerr << std::format("renderer creation failure, see {}\n", SDL_GetError());
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return 1;
+  } 
+  if (conf.default_conf){
+    SDL_RenderSetLogicalSize(renderer, conf.w, conf.h);
+    SDL_SetWindowMinimumSize(window, conf.w_min, conf.h_min);
+  } 
+
+  return 0;
+}
+
+
+class DebugWindowManager{
+  public:
+    SDL_Window* win_debug = nullptr;
+    SDL_Renderer* ren_debug = nullptr;
+
+};
+
+
+class GameWindowManager{
+  public:
+    SDL_Window* window = nullptr;
+    SDL_Renderer* renderer = nullptr;
+};
+int main(){
+  SystemStruct *CoreSysStruct = new SystemStruct();
+
+  InputManager input;
+  input.addKeyMapping("input_up", SDL_SCANCODE_W);
+  input.addKeyMapping("input_up", SDL_SCANCODE_UP);
+  input.addKeyMapping("input_down", SDL_SCANCODE_S); 
+  input.addKeyMapping("input_down", SDL_SCANCODE_DOWN);
+
+
+  input.addKeyMapping("input_down", SDL_SCANCODE_S); 
+  input.addKeyMapping("input_down", SDL_SCANCODE_DOWN); 
+
+  input.addKeyMapping("input_down", SDL_SCANCODE_S); 
+  input.addKeyMapping("input_down", SDL_SCANCODE_DOWN); 
+  // 2 structs: sdlwindow and sdl renderer, then initialize it!
+  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+    return 1;
+  }
+
+  // initialize win + render
+  //SDL_CreateWindowAndRenderer(640, 640, 0, &window, &renderer);
+  InitiateWindow(window, renderer, InitWinRenConfig{});
+  // DebugWindowManager dbgWindow = {};
+  // InitiateWindow(dbgWindow.win_debug, dbgWindow.ren_debug, InitWinRenConfig{});
+  //
+  //
+  // SDL_SetRenderDrawColor(dbgWindow.ren_debug, 33, 150, 243, 255);
+  // SDL_RenderPresent(dbgWindow.ren_debug);
+  //
+  // SDL_RenderSetScale(renderer, 4,4);
+
+  SDL_SetRenderDrawColor(renderer, 33, 150, 243, 255);
+  SDL_RenderClear(renderer);
+  SDL_RenderPresent(renderer);
+  // loop
+  bool gameIsRunning = true;
+  CoreSysStruct->initPrint();
+  while(gameIsRunning){
+    input.updateStartOfFrame();
+    CoreSysStruct->frameStart = SDL_GetTicks();
+    SDL_Event event;
+    // start loop:
+    while(SDL_PollEvent(&event)){ //if (SDL_WaitEvent(&event))
+      CoreSysStruct->printDebug(DebugPrintStates::All);
+      input.processEvent(event);
+      switch (event.type){
+        using enum SDL_EventType;
+        [[likely]] case SDL_MOUSEMOTION:
+          CoreSysStruct->debugStates.mouse = {
+            .x = event.motion.x, 
+            .y = event.motion.y, 
+            .x_rel = event.motion.xrel, 
+            .y_rel = event.motion.yrel
+          };
+        break;
+        case SDL_KEYDOWN:
+        CoreSysStruct->debugStates.keyboard = {
+          .scancode = event.key.keysym.scancode,
+          .mod = event.key.keysym.mod,
+          .sym = static_cast<unsigned int>(event.key.keysym.sym)
+        };
+        if (event.key.keysym.sym == SDLK_BACKSPACE) {
+          CoreSysStruct->processBackspace();
+        }
+        else if (event.key.keysym.scancode >= SDL_SCANCODE_A && event.key.keysym.scancode <= SDL_SCANCODE_Z) {
+          CoreSysStruct->pushKeystroke(CoreSysStruct->ProcessLetter(event.key));
+          // char res = '_';
+          // if(event.key.keysym.mod & (KMOD_LSHIFT | KMOD_RSHIFT)){
+          //   res = std::toupper('a'+event.key.keysym.scancode-4);
+          // }
+          // else{
+          //   res = ('a'+event.key.keysym.scancode-4);
+          // }
+          // CoreSysStruct->keyBuff.push_back(res);
+          // term::move_up(3,true);
+          // std::cout<< std::string_view(CoreSysStruct->keyBuff)<<std::flush;
+          // term::move_down(3);
+        }
+        break;
+        [[unlikely]] case SDL_QUIT:
+          gameIsRunning = false;
+        break;
+      } // switch
+    } // event poll loop
+
+    //Game Logic here()
+    //Render Frame here()
+    Uint32 frameTime = SDL_GetTicks() - CoreSysStruct->frameStart;
+    if (FIXED_TIME_STEP > frameTime) {
+      SDL_Delay(FIXED_TIME_STEP - frameTime);
+    }
+  } //while true loop
+    // SDL_Delay(3000);
+
+
+
+  SDL_DestroyRenderer(renderer);
+  SDL_DestroyWindow(window);
+  SDL_Quit();
+
+
+  return 0;
+}
+
