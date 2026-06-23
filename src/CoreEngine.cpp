@@ -1,5 +1,8 @@
 #include "CoreEngine.hpp"
 #include "BindScriptManager.hpp"
+#include "node/Sprite2D.hpp"
+#include "node/Node2D.hpp"
+#include "node/slop/fishnode.cpp"
 
 
 bool CoreEngine::init() {
@@ -21,6 +24,15 @@ bool CoreEngine::init() {
   setupBindings();
   sysStruct->init();
   running = true;
+
+
+  FishNode_S2D *Fish2D = new FishNode_S2D();
+  Node *aNode = new Node();
+  Sprite2D *tex = new Sprite2D(3);
+  aNode->addChild(Fish2D);
+  Fish2D->addChild(tex);
+
+  this->activeScene=aNode;
   return true;
 }
 
@@ -117,6 +129,12 @@ void CoreEngine::run() {
     }
     coreRenderer->flushQueue();
 
+    auto *ren =    gameWindow.getRenderer();
+    SDL_RenderPresent(ren);
+    // const double MIN_FRAME_TIME = 1.0 / 120.0;
+    // while ((static_cast<double>(SDL_GetPerformanceCounter() - newTicks) / frequency) < MIN_FRAME_TIME) {
+    //   SDL_Delay(0); 
+    // }
     // uint64_t frameTime = SDL_GetTicks() - frameStart;
     // if (FIXED_TIME_STEP > frameTime) {
     //   SDL_Delay(FIXED_TIME_STEP - frameTime);

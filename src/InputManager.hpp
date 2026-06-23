@@ -74,7 +74,7 @@ class InputManager {
         return *iterator; 
     }
 
-
+  
     void addKeyMapping(const std::string& action, SDL_Scancode scancode);
     void addActionFunctMap(const std::string& action, CallbackType callbackFunc, void* context);
 

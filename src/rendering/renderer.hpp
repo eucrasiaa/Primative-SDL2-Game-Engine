@@ -1,10 +1,12 @@
 #pragma once
 #include <SDL_render.h>
 #include <algorithm>
+#include <iostream>
 #include <stdint.h>
 #include <vector>
 
 enum TexturesTMP{
+  NONE = 5,
   Square = 0,
   Rectangle = 1,
   R_Triangle = 2,
@@ -12,17 +14,29 @@ enum TexturesTMP{
   Circle = 4,
 };
 
-class Renderer {
-  
-  public:
+
+
+// _______________________
+// ______________________
+//  REALLY DOGSHIT PLACEHOLDER NOT A JUDGE OF CHARATER
+//  ITLL GET REPLACED LATER WITH OPENGL
+//  ____________________
+//
+//  ____________________
+//
+//  
     struct RenderCommand {
-      int z_index;          // For sorting (UI = 100, Background = -10)
-      uint32_t texture_id;  // An abstract ID your engine uses, NOT an SDL_Texture*
+      int z_index;          
+      uint32_t texture_id;
       float x, y, width, height;
       float rotation;
       float scaleX,scaleY;
       uint8_t r, g, b, a;   // Tint
     };
+
+class Renderer {
+  
+  public:
   private:
     SDL_Renderer *sdlRenderer;
     std::vector<RenderCommand> renderQueue;
@@ -41,6 +55,8 @@ class Renderer {
     void drawRect(float x, float y, float w, float h, uint8_t r, uint8_t g, uint8_t b);
   
 
+
+    
     void drawSprite(RenderCommand cmd) {
       // Set color tint for this command
       SDL_SetRenderDrawColor(sdlRenderer, cmd.r, cmd.g, cmd.b, cmd.a);

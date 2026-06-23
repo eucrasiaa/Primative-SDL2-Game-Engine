@@ -12,6 +12,7 @@ void Node::update(float dt, const InputManager& inputs) {
 
 // base only signals down a render chain start
 void Node::render(Renderer& renderer) {
+  // std::cout<<"call Node Parent Render " <<active << std::endl;
   if (!active) return;
   for (uint32_t i = 0; i < child_count; ++i) {
     if (children[i] != nullptr){
