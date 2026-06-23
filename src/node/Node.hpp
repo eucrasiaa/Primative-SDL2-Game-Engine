@@ -1,34 +1,6 @@
 #pragma once
-#include "../rendering/renderer.hpp"
-#include "wtypes/Vec2.hpp"
-#include <iostream>
-#include <stdint.h>
-#include "../InputManager.hpp"
+#include "../Engine.hpp"
 
-/* handle me later plz ty
-void processGarbageCollection(Node* root) {
-  if (!root) return;
-  // POST ORDER!! children up.. NOTE NO INCREMENET, WE SWAP?
-  // TODO. validate in connection with the ~ decontrucct to make sure i dont double it LOL
-  for (uint32_t i = 0; i < root->child_count; ) {
-    if (root->children[i]->isQueuedForDeletion()) {
-      // calls ~ ... be aware...
-      delete root->children[i];  
-
-      // shift for gap?
-      for (uint32_t j = i; j < root->child_count - 1; ++j) {
-        root->children[j] = root->children[j + 1];
-      }
-      root->child_count--;
-      // Do not increment i, evaluate the swapped element
-    } else {
-      processGarbageCollection(root->children[i]);
-      ++i;
-    }
-  }
-}
-
- */
 class Node;
 
 
@@ -59,6 +31,7 @@ class Node {
     void*              owner;
     bool               queued_free;
   public:
+    friend class Engine;
     // ? will i doubt id ever call it when theres children id travese first. but
     // also does this.. FIXME?
     virtual ~Node() {
@@ -75,7 +48,54 @@ class Node {
 
 
     virtual void ready() {}
-    virtual void update(float dt, const InputManager& inputs);
-    virtual void render(Renderer& renderer);
+    virtual void update(float dt);
+    virtual void render();
+
+    // some lifecycle helpers maybe
+    virtual void onEnter() {}
+    virtual void onExit() {}
+    virtual void onPause() {}
+    virtual void onResume() {}
+
+    // child and stuff mgmt. #maternity
+    // TODO: THIS SEEMS LIKE A THING TO FIX LATER!!
+    // consider reworking to unique_ptrs because yea. i doubt itll ever not be true ownership?
     void addChild(Node* child);
+    void removeChild(Node* child);
+    
+    template<typename T>
+    T* addChild(T* child) {
+        addChild(static_cast<Node*>(child)); 
+        return child; 
+    }
+    
+    // possibly in passing down mouse clicks, tbd
+    virtual void onInputEvent(const SDL_Event& event) {};
 };
+
+
+/* handle me later plz ty
+void processGarbageCollection(Node* root) {
+  if (!root) return;
+  // POST ORDER!! children up.. NOTE NO INCREMENET, WE SWAP?
+  // TODO. validate in connection with the ~ decontrucct to make sure i dont double it LOL
+  for (uint32_t i = 0; i < root->child_count; ) {
+    if (root->children[i]->isQueuedForDeletion()) {
+      // calls ~ ... be aware...
+      delete root->children[i];  
+
+      // shift for gap?
+      for (uint32_t j = i; j < root->child_count - 1; ++j) {
+        root->children[j] = root->children[j + 1];
+      }
+      root->child_count--;
+      // Do not increment i, evaluate the swapped element
+    } else {
+      processGarbageCollection(root->children[i]);
+      ++i;
+    }
+  }
+}
+
+ */
+

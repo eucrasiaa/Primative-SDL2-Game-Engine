@@ -35,9 +35,10 @@ class SystemStruct{
 
 
 
-    const InputManager& input;
+    // const InputManager& input;
     std::vector<char> keyBuff;
-    SystemStruct(const InputManager& input) : input(input){
+    // SystemStruct(const InputManager& input) : input(input){
+    SystemStruct(){ 
       keyBuff.reserve(1000);
     }
     ~SystemStruct() = default;

@@ -23,7 +23,7 @@ class Sprite2D : public Node{
     Sprite2D(uint32_t textureId) 
         : tex(textureId) {}
 
-    void render(Renderer& renderer){
+    void render(){
       x = static_cast<Node2D*>(parent)->Position.x;
       
       y = static_cast<Node2D*>(parent)->Position.y;
@@ -35,7 +35,7 @@ class Sprite2D : public Node{
         .r=r,.g=g,.b=b,.a=a
 
       };
-      renderer.submitCommand(cmd);
+      Engine::GetRenderer()->submitCommand(cmd);
 
     }
 };

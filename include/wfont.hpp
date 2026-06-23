@@ -86,4 +86,10 @@ struct Font {
       std::cout << "\n";
     }
   }
+  const uint8_t* getCharacterData(size_t charIndex) const {
+    if (charIndex >= header.numChars) {
+        return nullptr;
+    }
+    return dataBuffer.data() + (charIndex * BYTES_PER_CHAR);
+  }
 };

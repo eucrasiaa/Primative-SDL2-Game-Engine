@@ -1,6 +1,6 @@
 #pragma once
 #include "Node.hpp"
-
+#include "wtypes/Vec2.hpp"
 class Node2D : public Node{
   public:
     Vec2 Position = {};

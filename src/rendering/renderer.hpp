@@ -4,7 +4,6 @@
 #include <iostream>
 #include <stdint.h>
 #include <vector>
-
 enum TexturesTMP{
   NONE = 5,
   Square = 0,
@@ -115,10 +114,16 @@ void drawCircleHelper(int centreX, int centreY, int radius) {
     }
 
 
+
   public:
     virtual ~Renderer() = default;
-    
-    Renderer(SDL_Renderer* renderer) : sdlRenderer(renderer) {}
+     
+    Renderer(SDL_Renderer* renderer) : sdlRenderer(renderer) {
+
+    }
+
+
+
     void submitCommand(RenderCommand cmd){
       renderQueue.push_back(cmd);
     }
@@ -146,7 +151,8 @@ void drawCircleHelper(int centreX, int centreY, int radius) {
         drawSprite(cmd);
       }
 
-      // Reset queue for next frame
+
+
       renderQueue.clear();
     }
 
