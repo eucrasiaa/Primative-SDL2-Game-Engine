@@ -1,24 +1,20 @@
 #pragma once
 #include <SDL_scancode.h>
-#include <iostream>
 #include <string_view>
-#include <ranges>
-#include <fstream>
-#include <sstream>
 #include <SDL2/SDL.h>
 #include "InputManager.hpp"
+#include "EngineConfig.hpp"
 
-
-
-constexpr std::string_view script_source = R"(
-    input_up:    W, UP
-    input_down:  S, DOWN
-    input_left:  A, LEFT
-    input_right: D, RIGHT
-    quit_game:   ESC
-    resize_down: [
-    resize_up:   ]
-)";
+constexpr std::string_view script_source = Config::BINDINGS;
+// constexpr std::string_view script_source = R"(
+//     input_up:    W, UP
+//     input_down:  S, DOWN
+//     input_left:  A, LEFT
+//     input_right: D, RIGHT
+//     quit_game:   ESC
+//     resize_down: [
+//     resize_up:   ]
+// )";
 
 
 
@@ -93,7 +89,6 @@ constexpr FixedBindingList parse_script(std::string_view text) {
 }
 
 constexpr FixedBindingList compiled_bindings = parse_script(script_source);
-
 
 inline void loadBindingsCompiled(InputManager& input) {
     for (size_t i = 0; i < compiled_bindings.count; ++i) {

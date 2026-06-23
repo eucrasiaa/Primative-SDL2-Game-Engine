@@ -4,4 +4,4 @@ vgcore*
 CMakeFiles/
 srcGraph.py
 source_graph.dot
-detailed_course_graph.png
+detailed_source_graph.png

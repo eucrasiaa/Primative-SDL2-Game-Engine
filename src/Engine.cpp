@@ -1,5 +1,5 @@
 #include "Engine.hpp"
-#include "BindScriptManager.hpp"
+#include "EngineBindings.hpp"
 #include "SystemStruct.hpp"
 #include "WindowManager.hpp"
 
@@ -204,25 +204,8 @@ void Engine::wef_handleEventsInternal(){
 
 
 void Engine::wef_setupBindingsInternal() {
-    loadBindingsCompiled(*we_input);
-    
-    // Testing bindings
-    we_input->addActionFunctMap("input_up", 
-        [](void*) {
-            printf("hihihiihihihihihih\n\n\nhihihih\n\n\n");
-        }, 
-        nullptr
-    );
-    
-    we_input->addActionFunctMap("quit_game", 
-        [](void* context) {
-            if (context != nullptr) {
-                auto* engine = static_cast<Engine*>(context);
-                engine->KillGame();
-            }
-        }, 
-        this
-    );
+    // loadBindingsCompiled(*we_input);
+    Config::setupBindings(this, we_input.get());
 }
 
 void Engine::processGarbageCollection(Node* root) {

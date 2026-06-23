@@ -4,7 +4,6 @@
 // a psudo public Engine with the global static states for things for more universal access
 // eg inputs should be global reads not passed to everything?
 #include "InputManager.hpp"
-#include "bindings/BindingSystem.hpp"
 #include "rendering/renderer.hpp"
 #include "wtypes/Vec2.hpp"
 #include "node/Node.hpp"
