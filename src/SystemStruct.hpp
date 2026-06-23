@@ -20,11 +20,12 @@ typedef struct DebugStates{
 
 
 typedef enum DebugPrintStates{
-  None = 0x0,
-  Mouse = 0x1,
-  Keyboard = 0x2,
-  TextBuff = 0x4,
-  All = 0x1F,
+  None = 0b0,
+  Mouse = 0b10,
+  Keyboard = 0b100,
+  TextBuff = 0b1000,
+  InputState = 0x10000,
+  All = 0xFFFF,
 }DebugPrintStates;
 
 class SystemStruct{
@@ -33,10 +34,10 @@ class SystemStruct{
     DebugStates debugStates;
 
 
-    Uint32 frameStart; 
-    InputManager input;
+
+    const InputManager& input;
     std::vector<char> keyBuff;
-    SystemStruct(){
+    SystemStruct(const InputManager& input) : input(input){
       keyBuff.reserve(1000);
     }
     ~SystemStruct() = default;

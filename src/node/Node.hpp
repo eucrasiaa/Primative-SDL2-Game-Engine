@@ -3,6 +3,7 @@
 #include "wtypes/Vec2.hpp"
 #include <iostream>
 #include <stdint.h>
+#include "../InputManager.hpp"
 
 /* handle me later plz ty
 void processGarbageCollection(Node* root) {
@@ -74,7 +75,7 @@ class Node {
 
 
     virtual void ready() {}
-    virtual void update(float dt);
+    virtual void update(float dt, const InputManager& inputs);
     virtual void render(Renderer& renderer);
     void addChild(Node* child);
 };

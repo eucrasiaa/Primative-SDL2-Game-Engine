@@ -43,6 +43,9 @@ void SystemStruct::printDebug(uint32_t flags){
     std::cout << std::string_view(keyBuff.data(), keyBuff.size()) << std::flush;
     term::move_down(DebugPrintStates::TextBuff);
   }
+  if (flags & DebugPrintStates::InputState){
+
+  }
 
   // term::move_up(5, true);
   // term::print_labeled_array("Mouse", 

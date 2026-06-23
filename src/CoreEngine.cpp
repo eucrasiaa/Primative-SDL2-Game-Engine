@@ -2,11 +2,42 @@
 #include "BindScriptManager.hpp"
 
 
+bool CoreEngine::init() {
+  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    std::printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
+    return false;
+  }
+  gameWindow.initialize("Game Window");
+  // debugWindow.initialize("Debug View", 400, 400);
+
+  auto* ren = gameWindow.getRenderer();
+  if (ren) {
+    SDL_SetRenderDrawColor(ren, 33, 150, 243, 255);
+    SDL_RenderClear(ren);
+    SDL_RenderPresent(ren);
+  }
+  
+  coreRenderer = new Renderer(ren);
+  setupBindings();
+  sysStruct->init();
+  running = true;
+  return true;
+}
+
+
+CoreEngine::CoreEngine() {
+  input = new InputManager();
+  sysStruct = std::make_unique<SystemStruct>(*input);
+}
+void CoreEngine::killgame(){
+  this->running=false;
+}
+
 void CoreEngine::handleEvents(){
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     sysStruct->printDebug(DebugPrintStates::All);
-    input.processEvent(event);
+    input->processEvent(event);
     switch (event.type) {
       [[likely]] case SDL_MOUSEMOTION:
         sysStruct->debugStates.mouse = {
@@ -38,28 +69,69 @@ void CoreEngine::handleEvents(){
 }
 
 void CoreEngine::run() {
+  
+  uint64_t currentTicks = SDL_GetPerformanceCounter();
+  uint64_t frequency = SDL_GetPerformanceFrequency();
+ 
+  double accumulator = 0.0;
+  const double FIXED_DT = 1.0 / 60.0; 
+  const double MAX_DELTA = 0.25; //death spiral cap
+
   while (running) {
-    input.updateStartOfFrame();
-    sysStruct->frameStart = SDL_GetTicks();
+    
+    uint64_t newTicks = SDL_GetPerformanceCounter();
+    // exact real time elapsed, seconds
+    double frameTime = static_cast<double>(newTicks - currentTicks) / frequency;
+    currentTicks = newTicks;
+    
+
+    //spiral catch
+    if (frameTime > MAX_DELTA) {
+      frameTime = MAX_DELTA;
+    }
+    //time as currency #what moron wrote these comments
+    accumulator += frameTime;
+
+    input->updateStartOfFrame();
+    // sysStruct->frameStart = SDL_GetTicks();
 
     handleEvents();
+    
+    while (accumulator >= FIXED_DT) {
+      if (activeScene != nullptr) {
+        // Physics and vital game logic updates use FIXED_DT, NOT variable frameTime
+        activeScene->update(FIXED_DT, *input);
+      }
+      accumulator -= FIXED_DT;
+    }
 
+    // if(activeScene !=nullptr){
+    //   activeScene->update(dt, *inputs);
+    //   activeScene->render(*coreRenderer);
+    // }
     // GAME LOGIC & UI STATE UPDATES HERE
     // RENDER FRAME HERE
-
-    Uint32 frameTime = SDL_GetTicks() - sysStruct->frameStart;
-    if (FIXED_TIME_STEP > frameTime) {
-      SDL_Delay(FIXED_TIME_STEP - frameTime);
+    if (activeScene != nullptr) {
+      // condider DT for interpolation alpha
+      activeScene->render(*coreRenderer);
     }
+    coreRenderer->flushQueue();
+
+    // uint64_t frameTime = SDL_GetTicks() - frameStart;
+    // if (FIXED_TIME_STEP > frameTime) {
+    //   SDL_Delay(FIXED_TIME_STEP - frameTime);
+    // }
   }
 }
 
 CoreEngine::~CoreEngine() {
+  delete coreRenderer;
+  delete input;
   SDL_Quit();
 }
 
 void PrintA(void*){
-  printf("hihihiihihihihihih\n\n\nhihihih");
+  printf("hihihiihihihihihih\n\n\nhihihih\n\n\n");
 }
 
 struct and_self{
@@ -70,31 +142,31 @@ void QuitGameBind(void *game){
   static_cast<CoreEngine*>(game)->killgame();
 }
 void CoreEngine::setupBindings(){
-  loadBindingsCompiled(input);
-  input.addActionFunctMap("input_up", *PrintA);
+  loadBindingsCompiled(*input);
+  input->addActionFunctMap("input_up", *PrintA, nullptr);
   and_self* args = new and_self();
   args->first = nullptr;
   args->self = this;
 
-  input.addActionFunctMap("quit_game", 
+  input->addActionFunctMap("quit_game", 
       [](void* context) {
-          if (context != nullptr) {
-              auto* engine = static_cast<CoreEngine*>(context);
-              engine->killgame();
-          }
+      if (context != nullptr) {
+      auto* engine = static_cast<CoreEngine*>(context);
+      engine->killgame();
+      }
       }, 
       this
-  );
+      );
 
-      // input.addKeyMapping("input_up", SDL_SCANCODE_W);
-      // input.addKeyMapping("input_up", SDL_SCANCODE_UP);
-      // input.addKeyMapping("input_down", SDL_SCANCODE_S); 
-      // input.addKeyMapping("input_down", SDL_SCANCODE_DOWN);
-      //
-      //
-      // input.addKeyMapping("input_left", SDL_SCANCODE_A); 
-      // input.addKeyMapping("input_left", SDL_SCANCODE_LEFT); 
-      //
-      // input.addKeyMapping("input_right", SDL_SCANCODE_D); 
-      // input.addKeyMapping("input_right", SDL_SCANCODE_RIGHT); 
-    }
+  // input.addKeyMapping("input_up", SDL_SCANCODE_W);
+  // input.addKeyMapping("input_up", SDL_SCANCODE_UP);
+  // input.addKeyMapping("input_down", SDL_SCANCODE_S); 
+  // input.addKeyMapping("input_down", SDL_SCANCODE_DOWN);
+  //
+  //
+  // input.addKeyMapping("input_left", SDL_SCANCODE_A); 
+  // input.addKeyMapping("input_left", SDL_SCANCODE_LEFT); 
+  //
+  // input.addKeyMapping("input_right", SDL_SCANCODE_D); 
+  // input.addKeyMapping("input_right", SDL_SCANCODE_RIGHT); 
+}

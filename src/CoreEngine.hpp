@@ -5,47 +5,30 @@
 #include "SystemStruct.hpp"
 #include "WindowManager.hpp"
 #include "BindScriptManager.hpp"
+#include "node/Node.hpp"
+#include "rendering/renderer.hpp"
 const Uint32 FIXED_TIME_STEP = 1000/60; // 60hz, or 0.01666 seconds
 
 class CoreEngine {
   private:
     bool running = false;
-
+    InputManager* input=nullptr;
+    Renderer* coreRenderer = nullptr;
   public:
     std::unique_ptr<SystemStruct> sysStruct;
-    InputManager input;
+
+    Uint32 frameStart; 
 
     // Visual / UI Subsystems
     WindowInstance gameWindow;
     WindowInstance debugWindow;
+    
+    Node *activeScene = nullptr;
 
-    CoreEngine() {
-      sysStruct = std::make_unique<SystemStruct>();
-    }
-    void killgame(){
-      this->running=false;
-    }
-    bool init() {
-      if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
-        return false;
-      }
-      gameWindow.initialize("Game Window");
-      // debugWindow.initialize("Debug View", 400, 400);
 
-      auto* ren = gameWindow.getRenderer();
-      if (ren) {
-        SDL_SetRenderDrawColor(ren, 33, 150, 243, 255);
-        SDL_RenderClear(ren);
-        SDL_RenderPresent(ren);
-      }
-
-      setupBindings();
-      sysStruct->init();
-      running = true;
-      return true;
-    }
-
+    CoreEngine();
+    void killgame();
+    bool init();
     void setupBindings();
     void handleEvents();
     void run();

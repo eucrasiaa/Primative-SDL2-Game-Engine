@@ -1,11 +1,11 @@
 #include "Node.hpp"
 
-void Node::update(float dt) {
+void Node::update(float dt, const InputManager& inputs) {
   if (!active) return;
   for (uint i =0; i< child_count; ++i) {
     // TODO verify if this check is needed. 
     if (children[i] != nullptr){
-      children[i]->update(dt);
+      children[i]->update(dt, inputs);
     }
   }
 }
