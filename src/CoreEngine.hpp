@@ -34,3 +34,46 @@ class CoreEngine {
     void run();
     ~CoreEngine();
 };
+/*
+class CoreEngineA{
+  private:
+    //temp put here but not actually used like this for the moment
+    static CoreEngine* g_coreEngine;
+    static InputManager* g_input;
+    static Renderer* g_renderer;
+
+    bool running = false;
+    
+  public:
+    std::unique_ptr<SystemStruct> sysStruct;
+    Uint32 frameStart; 
+    
+    static InputManager* GetInput() { return g_input; }
+    static CoreEngine* Get() { return g_coreEngine; }
+
+    WindowInstance gameWindow;
+    //WindowInstance debugWindow;
+    
+    Node *activeScene = nullptr;
+
+
+    CoreEngineA();
+    void killgame();
+    bool init();
+    void setupBindings();
+    void handleEvents();
+    void run();
+    ~CoreEngineA();
+};
+CoreEngineA* CoreEngineA::s_instance = nullptr;
+
+bool CoreEngineA::Init() {
+    if (s_instance) return true; // Already initialized
+    s_instance = new CoreEngine();
+    return s_instance->initInternal();
+}
+
+void CoreEngineA::Run() {
+    if (s_instance) s_instance->runInternal();
+}
+*/

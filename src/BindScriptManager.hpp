@@ -16,6 +16,8 @@ constexpr std::string_view script_source = R"(
     input_left:  A, LEFT
     input_right: D, RIGHT
     quit_game:   ESC
+    resize_down: [
+    resize_up:   ]
 )";
 
 
@@ -35,6 +37,8 @@ constexpr SDL_Scancode string_to_scancode(std::string_view token) {
     if (token == "D")     return SDL_SCANCODE_D;
     if (token == "RIGHT") return SDL_SCANCODE_RIGHT;
     if (token == "ESC")   return SDL_SCANCODE_ESCAPE;
+    if (token == "[")     return SDL_SCANCODE_LEFTBRACKET;
+    if (token == "]")     return SDL_SCANCODE_RIGHTBRACKET;
     return SDL_SCANCODE_UNKNOWN; // fallback
 }
 

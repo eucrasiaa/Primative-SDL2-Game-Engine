@@ -16,6 +16,11 @@ struct Vec2{
   static const Vec2 UP;
   static const Vec2 DOWN;
 
+  /**
+   * length, calculated by x^2 + y^2
+   *
+   *
+   */
   float length() const {
     return std::sqrt(x * x + y * y);
   }

@@ -3,6 +3,7 @@
 #include "node/Sprite2D.hpp"
 #include "node/Node2D.hpp"
 #include "node/slop/fishnode.cpp"
+#include <cstdint>
 
 
 bool CoreEngine::init() {
@@ -24,15 +25,19 @@ bool CoreEngine::init() {
   setupBindings();
   sysStruct->init();
   running = true;
+  
 
+  /* testing */
 
   FishNode_S2D *Fish2D = new FishNode_S2D();
   Node *aNode = new Node();
   Sprite2D *tex = new Sprite2D(3);
   aNode->addChild(Fish2D);
   Fish2D->addChild(tex);
-
   this->activeScene=aNode;
+
+  /* end testing */
+
   return true;
 }
 
@@ -159,13 +164,16 @@ struct and_self{
 void QuitGameBind(void *game){
   static_cast<CoreEngine*>(game)->killgame();
 }
+void ResizeGame(int8_t direction){
+  if (direction > 0){
+
+  }
+}
 void CoreEngine::setupBindings(){
   loadBindingsCompiled(*input);
-  input->addActionFunctMap("input_up", *PrintA, nullptr);
-  and_self* args = new and_self();
-  args->first = nullptr;
-  args->self = this;
 
+  /* testing */
+  input->addActionFunctMap("input_up", *PrintA, nullptr);
   input->addActionFunctMap("quit_game", 
       [](void* context) {
       if (context != nullptr) {
@@ -175,6 +183,8 @@ void CoreEngine::setupBindings(){
       }, 
       this
       );
+
+  /* end testing */
 
   // input.addKeyMapping("input_up", SDL_SCANCODE_W);
   // input.addKeyMapping("input_up", SDL_SCANCODE_UP);
@@ -188,3 +198,5 @@ void CoreEngine::setupBindings(){
   // input.addKeyMapping("input_right", SDL_SCANCODE_D); 
   // input.addKeyMapping("input_right", SDL_SCANCODE_RIGHT); 
 }
+
+
