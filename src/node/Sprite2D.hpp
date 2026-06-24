@@ -25,7 +25,6 @@ class Sprite2D : public Node{
 
     void render(){
       x = static_cast<Node2D*>(parent)->Position.x;
-      
       y = static_cast<Node2D*>(parent)->Position.y;
       RenderCommand cmd = {
         .z_index = z_index,

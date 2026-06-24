@@ -1,6 +1,26 @@
 cmake_minimum_required(VERSION 3.15)
 project(render_trials LANGUAGES CXX)
 
+
+# presets reminder:
+# simply just:
+#   cmake --preset sdl2-debug
+#   cmake --preset raylib-release
+# etc. from preset file
+# then:
+# cmake --build --preset sdl2-debug
+
+
+# run via
+# # Regular running
+#./build/sdl2-debug/render_trials
+
+# GDB running
+#gdb ./build/sdl2-debug/render_trials
+
+# Valgrind running
+#valgrind --leak-check=full --suppressions=sdl2.supp ./build/sdl2-debug/render_trials
+
 if(CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
     message(FATAL_ERROR "Do not build in-source! Use: cmake -B build && cmake --build build")
 endif()
@@ -44,6 +64,8 @@ file(GLOB_RECURSE PROJECT_HEADERS CONFIGURE_DEPENDS
     "include/*.hpp"
 )
 
+
+
 message(STATUS "--- DEBUG ---")
 message(STATUS "Source files found: ${PROJECT_SOURCES}")
 message(STATUS "Header files found: ${PROJECT_HEADERS}")
@@ -57,6 +79,29 @@ target_include_directories(${PROJECT_NAME} PRIVATE include)
 
 if(BACKEND STREQUAL "SDL2")
     message(STATUS "Configuring project with SDL2 backend")
+
+    # gladslop
+    if(NOT TARGET glad::glad)
+      set(GLAD_INCLUDE_DIR "/usr/local/include")
+      set(GLAD_LIBRARY "/usr/local/lib/libglad.a")
+      add_library(glad::glad STATIC IMPORTED)
+      set_target_properties(glad::glad PROPERTIES
+          INTERFACE_INCLUDE_DIRECTORIES "${GLAD_INCLUDE_DIR}"
+          IMPORTED_LOCATION "${GLAD_LIBRARY}"
+      )
+      find_package(OpenGL REQUIRED)
+      find_package(Threads REQUIRED)
+
+      target_link_libraries(glad::glad INTERFACE 
+          OpenGL::GL 
+          Threads::Threads 
+          ${CMAKE_DL_LIBS} # -ldl? 
+      )
+    endif()
+    
+    target_link_libraries(${PROJECT_NAME} PRIVATE glad::glad)
+
+
     find_package(SDL2 REQUIRED)
 
     if(TARGET SDL2::SDL2)
@@ -94,7 +139,7 @@ else() # GCC / Clang
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic) # Active for ALL configs
     target_compile_options(${PROJECT_NAME} PRIVATE
         $<$<CONFIG:Debug>:-g3;-O0;-DDEBUG>
-        $<$<CONFIG:Release>:-O3;-DNDEBUG>  #could be O3 really
+        $<$<CONFIG:Release>:-O3;-DNDEBUG>  # consider -march=native
     )
 endif()
 # for both
@@ -123,7 +168,7 @@ if(USE_VALGRIND)
     find_program(VALGRIND_PROGRAM valgrind)
     if(VALGRIND_PROGRAM)
         add_custom_target(valgrind
-            COMMAND ${VALGRIND_PROGRAM} --leak-check=full --track-origins=yes --suppressions=sdl2.supp $<TARGET_FILE:${PROJECT_NAME}>
+            COMMAND ${VALGRIND_PROGRAM} --leak-check=full --track-origins=yes --suppressions='../sdl2.supp' $<TARGET_FILE:${PROJECT_NAME}>
             DEPENDS ${PROJECT_NAME}
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             COMMENT "Running Valgrind memory analysis"
