@@ -1,0 +1,3 @@
+[submodule "open_gl_trials"]
+	path = open_gl_trials
+	url = https://github.com/eucrasiaa/open_gl_trials
