@@ -1,3 +1,5 @@
+
+#define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <SDL_events.h>
 #include <SDL_keycode.h>
@@ -10,9 +12,11 @@
 #include "./node/devNode.hpp"
 
 
+
 int main(){
   // CoreEngine engine;
     
+  SDL_SetMainReady();
   if(!Engine::InitEngine()){
     return 1;
   }

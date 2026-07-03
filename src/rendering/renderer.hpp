@@ -103,6 +103,10 @@ class Renderer {
                        drawCircleHelper(centerX, centerY, radius);
                        break;
                      }
+        case NONE: {
+                     break;
+                   }
+
       }
     }
     void drawCircleHelper(int centreX, int centreY, int radius) {

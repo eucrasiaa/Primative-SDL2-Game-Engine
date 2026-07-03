@@ -2,7 +2,7 @@
 
 void Node::update(float dt) {
   if (!active) return;
-  for (uint i =0; i< child_count; ++i) {
+  for (unsigned int i =0; i< child_count; ++i) {
     // TODO verify if this check is needed. 
     if (children[i] != nullptr){
       children[i]->update(dt);

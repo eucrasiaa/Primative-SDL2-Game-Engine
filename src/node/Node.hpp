@@ -24,8 +24,8 @@ class Node {
 
 
     Node**             children = nullptr;
-    uint               child_count =0;
-    uint               child_cap   =0;
+    unsigned int               child_count =0;
+    unsigned int               child_cap   =0;
 
     bool               active = true;
     void*              owner;
